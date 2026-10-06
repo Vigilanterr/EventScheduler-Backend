@@ -153,3 +153,14 @@ export const findConflicts = async (
   }
   return conflicts;
 };
+
+export const findParticipantConflicts = async (
+  participants: string[],
+  excludeId?: string
+) => {
+  const rows = await db.select().from(events);
+  return rows.filter((r) => {
+    if (excludeId && r.id === excludeId) return false;
+    return intersection(r.participants, participants).length > 0;
+  });
+};
