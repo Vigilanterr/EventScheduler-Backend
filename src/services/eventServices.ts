@@ -98,3 +98,10 @@ export const validateEventInput = (body: any): string | null => {
   if (clean.length === 0) return "Field participants tidak boleh kosong!";
   return null;
 };
+
+export const validateParticipants = (participants: unknown): string | null => {
+  const clean = normalizeParticipants(participants);
+  if (clean === null) return "Field participants wajib berupa array string!";
+  if (clean.length === 0) return "Field participants tidak boleh kosong!";
+  return null;
+};
