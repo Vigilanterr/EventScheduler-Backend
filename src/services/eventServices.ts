@@ -234,3 +234,25 @@ export const buildConflictResponse = (conflicts: ConflictItem[], suggestion: Tim
   conflicts,
   suggestion,
 });
+
+export const updateEventWithConflictCheck = async (id: string, body: any): Promise<CreateEventResult> => {
+  const existing = await getEventByIdFromDb(id);
+  if (!existing) throw Object.assign(new Error("Event tidak ditemukan"), { status: 404 });
+  const err = validateEventInput(body);
+  if (err) throw Object.assign(new Error(err), { status: 400 });
+  const title = body.title.trim();
+  const start = parseDate(body.start_time ?? body.startTime)!;
+  const end = parseDate(body.end_time ?? body.endTime)!;
+  const participants = normalizeParticipants(body.participants)!;
+  const conflicts = await findConflicts(start, end, participants, id);
+  if (conflicts.length > 0) {
+    const suggestion = await findSuggestion(start, end, participants, id);
+    return { success: false, message: "Event memiliki konflik jadwal", conflicts, suggestion };
+  }
+  const rows = await db
+    .update(events)
+    .set({ title, startTime: start.toISOString(), endTime: end.toISOString(), participants, updatedAt: new Date().toISOString() })
+    .where(eq(events.id, id))
+    .returning();
+  return { success: true, message: "Event berhasil diperbarui", data: toResponse(rows[0]) };
+};
