@@ -54,6 +54,13 @@ export const parseDate = (value: unknown): Date | null => {
   return isNaN(d.getTime()) ? null : d;
 };
 
+export const dbTimeToMs = (value: string | Date): number => {
+  if (value instanceof Date) return value.getTime();
+  const s = value.replace(" ", "T");
+  const hasTZ = /Z$|[+-]\d{2}:?\d{2}$/.test(s);
+  return new Date(hasTZ ? s : s + "Z").getTime();
+};
+
 export const normalizeParticipants = (input: unknown): string[] | null => {
   if (!Array.isArray(input)) return null;
   const cleaned = input
@@ -175,8 +182,8 @@ export const findSuggestion = async (
   const related = await findParticipantConflicts(participants, excludeId);
   const busy = related
     .map((r) => ({
-      start: new Date(r.startTime).getTime(),
-      end: new Date(r.endTime).getTime(),
+      start: dbTimeToMs(r.startTime),
+      end: dbTimeToMs(r.endTime),
     }))
     .sort((a, b) => a.start - b.start);
   let candidate = start.getTime();
