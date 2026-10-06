@@ -1,3 +1,4 @@
+import { and, asc, eq, gt, lt, ne } from "drizzle-orm";
 import { db } from "../config/db";
 import { events } from "../config/schema";
 
@@ -79,4 +80,21 @@ export const intersection = (a: string[], b: string[]): string[] => {
     }
   }
   return out;
+};
+
+export const validateEventInput = (body: any): string | null => {
+  const title = body?.title;
+  const startRaw = body?.start_time ?? body?.startTime;
+  const endRaw = body?.end_time ?? body?.endTime;
+  const participants = body?.participants;
+  if (typeof title !== "string" || title.trim().length === 0) return "Field title wajib diisi!";
+  if (startRaw === undefined || endRaw === undefined) return "Field start_time dan end_time wajib diisi!";
+  const start = parseDate(startRaw);
+  const end = parseDate(endRaw);
+  if (!start || !end) return "Format start_time atau end_time tidak valid!";
+  if (start.getTime() >= end.getTime()) return "start_time harus lebih kecil dari end_time!";
+  const clean = normalizeParticipants(participants);
+  if (clean === null) return "Field participants wajib berupa array string!";
+  if (clean.length === 0) return "Field participants tidak boleh kosong!";
+  return null;
 };
