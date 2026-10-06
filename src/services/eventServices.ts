@@ -205,6 +205,14 @@ export const isSuggestionFree = async (
   return conflicts.length === 0;
 };
 
+export const validateSuggestion = (original: { start: Date; end: Date }, suggestion: TimeSlot): boolean => {
+  const origDuration = original.end.getTime() - original.start.getTime();
+  const sugDuration =
+    new Date(suggestion.end_time).getTime() - new Date(suggestion.start_time).getTime();
+  if (origDuration !== sugDuration) return false;
+  return new Date(suggestion.start_time).getTime() >= original.start.getTime();
+};
+
 export type CreateEventResult =
   | { success: true; message: string; data: EventResponse }
   | { success: false; message: string; conflicts: ConflictItem[]; suggestion: TimeSlot };
