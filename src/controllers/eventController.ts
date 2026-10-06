@@ -21,10 +21,11 @@ export const getEvents = async (_req: Request, res: Response) => {
 
 export const getEventById = async (req: Request, res: Response) => {
   try {
-    if (!isValidUUID(req.params.id)) {
+    const id = req.params.id as string;
+    if (!isValidUUID(id)) {
       return res.status(400).json({ success: false, message: "ID event tidak valid!" });
     }
-    const event = await getEventByIdFromDb(req.params.id);
+    const event = await getEventByIdFromDb(id);
     if (!event) {
       return res.status(404).json({ success: false, message: "Event tidak ditemukan!" });
     }
@@ -50,10 +51,11 @@ export const getEventDetail = getEventById;
 
 export const updateEvent = async (req: Request, res: Response) => {
   try {
-    if (!isValidUUID(req.params.id)) {
+    const id = req.params.id as string;
+    if (!isValidUUID(id)) {
       return res.status(400).json({ success: false, message: "ID event tidak valid!" });
     }
-    const result = await updateEventWithConflictCheck(req.params.id, req.body);
+    const result = await updateEventWithConflictCheck(id, req.body);
     if (!result.success) return res.status(409).json(result);
     return res.status(200).json(result);
   } catch (error: any) {
@@ -65,10 +67,11 @@ export const updateEvent = async (req: Request, res: Response) => {
 
 export const deleteEvent = async (req: Request, res: Response) => {
   try {
-    if (!isValidUUID(req.params.id)) {
+    const id = req.params.id as string;
+    if (!isValidUUID(id)) {
       return res.status(400).json({ success: false, message: "ID event tidak valid!" });
     }
-    const ok = await deleteEventFromDb(req.params.id);
+    const ok = await deleteEventFromDb(id);
     if (!ok) {
       return res.status(404).json({ success: false, message: "Event tidak ditemukan!" });
     }
