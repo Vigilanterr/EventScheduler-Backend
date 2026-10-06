@@ -227,3 +227,10 @@ export const createEventWithConflictCheck = async (body: any): Promise<CreateEve
     .returning();
   return { success: true, message: "Event berhasil dibuat", data: toResponse(rows[0]) };
 };
+
+export const buildConflictResponse = (conflicts: ConflictItem[], suggestion: TimeSlot) => ({
+  success: false as const,
+  message: "Event memiliki konflik jadwal",
+  conflicts,
+  suggestion,
+});
