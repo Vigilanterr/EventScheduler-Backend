@@ -123,3 +123,33 @@ export const deleteEventFromDb = async (id: string): Promise<boolean> => {
   await db.delete(events).where(eq(events.id, id));
   return true;
 };
+
+const findOverlapping = async (start: Date, end: Date, excludeId?: string) => {
+  const conditions = [lt(events.startTime, end.toISOString()), gt(events.endTime, start.toISOString())];
+  if (excludeId) conditions.push(ne(events.id, excludeId));
+  return db.select().from(events).where(and(...conditions));
+};
+
+export const findConflicts = async (
+  start: Date,
+  end: Date,
+  participants: string[],
+  excludeId?: string
+): Promise<ConflictItem[]> => {
+  const candidates = await findOverlapping(start, end, excludeId);
+  const conflicts: ConflictItem[] = [];
+  for (const row of candidates) {
+    const same = intersection(row.participants, participants);
+    if (same.length === 0) continue;
+    const res = toResponse(row);
+    conflicts.push({
+      event_id: res.id,
+      title: res.title,
+      start_time: res.start_time,
+      end_time: res.end_time,
+      participants: res.participants,
+      conflicting_participants: same,
+    });
+  }
+  return conflicts;
+};
