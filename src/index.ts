@@ -1,10 +1,22 @@
 import express from "express";
+import dotenv from "dotenv";
+import eventRoutes from "./routes/eventRoute";
+
+dotenv.config();
 
 const app = express();
-const PORT = 5000;
+app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("Hello Express + TypeScript!");
+const PORT = process.env.PORT || 3000;
+
+app.use("/events", eventRoutes);
+
+app.get("/", (_req, res) => {
+  res.status(200).json({ success: true, message: "Event Scheduler API" });
+});
+
+app.use((_req, res) => {
+  res.status(404).json({ success: false, message: "Route tidak ditemukan!" });
 });
 
 app.listen(PORT, () => {
