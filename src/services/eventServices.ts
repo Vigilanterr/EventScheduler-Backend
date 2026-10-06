@@ -105,3 +105,21 @@ export const validateParticipants = (participants: unknown): string | null => {
   if (clean.length === 0) return "Field participants tidak boleh kosong!";
   return null;
 };
+
+export const getAllEventsFromDb = async (): Promise<EventResponse[]> => {
+  const rows = await db.select().from(events).orderBy(asc(events.startTime));
+  return rows.map(toResponse);
+};
+
+export const getEventByIdFromDb = async (id: string): Promise<EventResponse | null> => {
+  const rows = await db.select().from(events).where(eq(events.id, id)).limit(1);
+  if (rows.length === 0) return null;
+  return toResponse(rows[0]);
+};
+
+export const deleteEventFromDb = async (id: string): Promise<boolean> => {
+  const existing = await getEventByIdFromDb(id);
+  if (!existing) return false;
+  await db.delete(events).where(eq(events.id, id));
+  return true;
+};
