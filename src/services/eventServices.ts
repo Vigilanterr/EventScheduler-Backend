@@ -164,3 +164,43 @@ export const findParticipantConflicts = async (
     return intersection(r.participants, participants).length > 0;
   });
 };
+
+export const findSuggestion = async (
+  start: Date,
+  end: Date,
+  participants: string[],
+  excludeId?: string
+): Promise<TimeSlot> => {
+  const duration = end.getTime() - start.getTime();
+  const related = await findParticipantConflicts(participants, excludeId);
+  const busy = related
+    .map((r) => ({
+      start: new Date(r.startTime).getTime(),
+      end: new Date(r.endTime).getTime(),
+    }))
+    .sort((a, b) => a.start - b.start);
+  let candidate = start.getTime();
+  for (let i = 0; i < 100; i++) {
+    const overlapping = busy.filter((b) => isOverlap(candidate, candidate + duration, b.start, b.end));
+    if (overlapping.length === 0) break;
+    candidate = Math.min(...overlapping.map((b) => b.end));
+  }
+  return {
+    start_time: new Date(candidate).toISOString(),
+    end_time: new Date(candidate + duration).toISOString(),
+  };
+};
+
+export const isSuggestionFree = async (
+  suggestion: TimeSlot,
+  participants: string[],
+  excludeId?: string
+): Promise<boolean> => {
+  const conflicts = await findConflicts(
+    new Date(suggestion.start_time),
+    new Date(suggestion.end_time),
+    participants,
+    excludeId
+  );
+  return conflicts.length === 0;
+};
