@@ -204,3 +204,26 @@ export const isSuggestionFree = async (
   );
   return conflicts.length === 0;
 };
+
+export type CreateEventResult =
+  | { success: true; message: string; data: EventResponse }
+  | { success: false; message: string; conflicts: ConflictItem[]; suggestion: TimeSlot };
+
+export const createEventWithConflictCheck = async (body: any): Promise<CreateEventResult> => {
+  const err = validateEventInput(body);
+  if (err) throw Object.assign(new Error(err), { status: 400 });
+  const title = body.title.trim();
+  const start = parseDate(body.start_time ?? body.startTime)!;
+  const end = parseDate(body.end_time ?? body.endTime)!;
+  const participants = normalizeParticipants(body.participants)!;
+  const conflicts = await findConflicts(start, end, participants);
+  if (conflicts.length > 0) {
+    const suggestion = await findSuggestion(start, end, participants);
+    return { success: false, message: "Event memiliki konflik jadwal", conflicts, suggestion };
+  }
+  const rows = await db
+    .insert(events)
+    .values({ title, startTime: start.toISOString(), endTime: end.toISOString(), participants })
+    .returning();
+  return { success: true, message: "Event berhasil dibuat", data: toResponse(rows[0]) };
+};
